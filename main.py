@@ -1,3 +1,4 @@
+# Cafe GUI for practise project
 from tkinter import *
 import pathlib
 
