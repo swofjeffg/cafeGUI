@@ -1,0 +1,18 @@
+name,price,category,img,size,flavour
+chicken sandwich,4.99,burger,chickensandwich.png,,
+lipton tea,1.99,drink,liptontea.png,300ml,peach
+lipton tea,2.49,drink,liptontea.png,500ml,peach
+lipton tea,1.99,drink,liptontea.png,300ml,lemon
+lipton tea,2.49,drink,liptontea.png,500ml,lemon
+basic burger,5.99,burger,basicburger.png,, 
+complex burger,7.99,burger,complexburger.png,,
+vege sandwich,4.99,burger,vegesandwich.png,,
+brain juice,2.49,drink,brainjuice.png,500ml,black currant
+ham sandwich,4.99,burger,hamsandwich.png,,
+chicken burger,7.99,burger,chickenburger.png,,
+chicken on rice,8.99,plate,chickenonrice.png,,
+chicken salad,5.99,plate,chickensalad.png,,
+tomato salad,5.49,plate,tomatosalad.png,,
+egg salad,4.99,plate,eggsalad.png,,
+cookie,0.99,desert,chocolatecookie.png,,chocolate
+cookie,0.99,desert,cookie.png,,plain
