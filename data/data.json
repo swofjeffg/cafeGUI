@@ -1,0 +1,106 @@
+[{
+        "name": "chicken sandwich",
+        "price": 4.99,
+        "category": "burger",
+        "img": "chickensandwich.png"
+    },
+    {
+        "name": "lipton tea peach",
+        "price": 2.49,
+        "category": "drink",
+        "img": "liptontea.png",
+        "size": "500ml"
+    },
+    {
+        "name": "lipton tea lemon",
+        "price": 2.49,
+        "category": "drink",
+        "img": "liptontea.png",
+        "size": "500ml"
+    },
+    {
+        "name": "basic burger",
+        "price": 5.99,
+        "category": "burger",
+        "img": "basicburger.png"
+    },
+    {
+        "name": "complex burger",
+        "price": 7.99,
+        "category": "burger",
+        "img": "complexburger.png"
+    },
+    {
+        "name": "vege sandwich",
+        "price": 4.99,
+        "category": "burger",
+        "img": "vegesandwich.png"
+    },
+    {
+        "name": "black currant",
+        "price": 2.49,
+        "category": "drink",
+        "img": "blackcurrant.png",
+        "size": "500ml"
+    },
+    {
+        "name": "ham sandwich",
+        "price": 4.99,
+        "category": "burger",
+        "img": "hamsandwich.png"
+    },
+    {
+        "name": "chicken burger",
+        "price": 7.99,
+        "category": "burger",
+        "img": "chickenburger.png"
+    },
+    {
+        "name": "chicken on rice",
+        "price": 8.99,
+        "category": "plate",
+        "img": "chickenonrice.png"
+    },
+    {
+        "name": "chicken salad",
+        "price": 5.99,
+        "category": "plate",
+        "img": "chickensalad.png"
+    },
+    {
+        "name": "tomato salad",
+        "price": 5.49,
+        "category": "plate",
+        "img": "tomatosalad.png"
+    },
+    {
+        "name": "egg salad",
+        "price": 4.99,
+        "category": "plate",
+        "img": "eggsalad.png"
+    },
+    {
+        "name": "chocolate cookie",
+        "price": 0.99,
+        "category": "desert",
+        "img": "chocolatecookie.png"
+    },
+    {
+        "name": "cookie",
+        "price": 0.99,
+        "category": "desert",
+        "img": "cookie.png"
+    },
+    {
+        "name": "fries",
+        "price": 0.99,
+        "category": "sides",
+        "img": "fries.png"
+    },
+    {
+        "name": "wedges",
+        "price": 1.29,
+        "category": "sides",
+        "img": "wedges.png"
+    }
+]
