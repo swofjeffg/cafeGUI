@@ -83,7 +83,7 @@
         "name": "chocolate cookie",
         "price": 0.99,
         "category": "desert",
-        "img": "chocolatecookie.png"
+        "img": "cookie.png"
     },
     {
         "name": "cookie",

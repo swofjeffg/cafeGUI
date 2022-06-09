@@ -2,6 +2,7 @@
 from tkinter import *
 import pathlib  # pip install pathlib
 import json
+from PIL import Image, ImageTk  # pip install pillow
 
 PATH = str(pathlib.Path(__file__).parent.resolve())+'/'
 BACKGROUND_COLOUR = '#111111'
@@ -14,14 +15,15 @@ class App:
         
         self.menu = external_data.json_data
         self.image_data = external_data.image_data
-        self.logo = PhotoImage(file=PATH+'imgs/placeholder.png')
+        self.small_image_data = external_data.small_image_data
+        self.logo = ImageTk.PhotoImage(Image.open(PATH+'imgs/placeholder.png').resize((120,100), Image.ANTIALIAS))
         
         self.categories = []
-        _ = []
+        filter_list = []
         for entry in self.menu:
-            if entry['category'] not in _:
+            if entry['category'] not in filter_list:
                 self.categories.append({'category': entry['category'], 'img': entry['img']})
-                _.append(entry['category'])
+                filter_list.append(entry['category'])
         self.categories
         self.category = self.categories[0]['category']
         
@@ -81,12 +83,11 @@ class App:
             catergory_name = category['category'].capitalize()
             border = Frame(categories_frame, background=BACKGROUND_COLOUR, highlightbackground='#ffffff', highlightthickness=1)
             frame = Frame(border, background=BACKGROUND_COLOUR)
-            for data in self.image_data:
+            for data in self.small_image_data:
                 if data['img_name'] == category['img']:
                     image_data = data['img_file']
-            image = Button(frame, image=image_data, borderwidth=0, background=BACKGROUND_COLOUR, activebackground=BACKGROUND_COLOUR, command=lambda i=category['category']:self.set_category(i))
-            image.img = image_data
-            image.pack()
+            button = Button(frame, image=image_data, width=120, height=100, borderwidth=0, background=BACKGROUND_COLOUR, activebackground=BACKGROUND_COLOUR, command=lambda i=category['category']:self.set_category(i))
+            button.pack()
             Button(frame, text=catergory_name, fg=ORANGE_COLOUR, borderwidth=0, background=BACKGROUND_COLOUR, activebackground=BACKGROUND_COLOUR, activeforeground=ORANGE_COLOUR, command=lambda i=category['category']:self.set_category(i)).pack()
             frame.pack(pady=5, padx=5)
             border.pack(pady=10, padx=10)
@@ -95,10 +96,28 @@ class App:
         
         options_frame = Frame(root, background=BACKGROUND_COLOUR, highlightbackground='#ffffff', highlightthickness=2)
         
+        x = y = 1
         for entry in self.menu:
             if entry['category'] == self.category:
-                t = entry['name']
-                Label(options_frame, text=t).pack()
+                x += 1
+                name, price = entry['name'], entry['price']
+                frame = Frame(options_frame, background=BACKGROUND_COLOUR, highlightbackground='#ffffff', highlightthickness=1)
+                frame.grid(column = x, row = y, pady=10, padx=10)
+                for data in self.image_data:
+                    if data['img_name'] == entry['img']:
+                        image_data = data['img_file']
+                image = Label(frame, image=image_data, width=350, height=200, background=BACKGROUND_COLOUR)
+                image.pack()
+                try:
+                    size = entry['size']
+                    Label(frame, text=f'{name.capitalize()}({size}) for ${price}', fg=ORANGE_COLOUR, background=BACKGROUND_COLOUR).pack()
+                except KeyError:
+                    Label(frame, text=f'{name.capitalize()} for ${price}', fg=ORANGE_COLOUR, background=BACKGROUND_COLOUR).pack()
+                if x == 3:
+                    x = 1
+                    y += 1
+        options_frame.grid_columnconfigure(0, weight=1) # centering the grid within 'options_frame' horizontally
+        options_frame.grid_columnconfigure(4, weight=1)
         
         options_frame.pack(fill='both', expand=True)
         
@@ -129,6 +148,7 @@ class App:
     
     def clear_order(self):
         self.order = []
+        print('order cleared')
     
     def set_category(self, category):
         self.category = category
@@ -139,13 +159,46 @@ class External_data_manager:
         with open(PATH+'data/data.json') as json_file:
             self.json_data = json.load(json_file)
   
-        self.image_data = []
+        self.image_data, self.small_image_data = [], []
+        
         for entry in self.json_data:
             try:
-                pic = PhotoImage(file=PATH+'imgs/'+entry['img'])
+                image = (Image.open(PATH+'imgs/'+entry['img']))
+                imagetk = ImageTk.PhotoImage(image)
+                pic = ImageTk.PhotoImage(image.resize((self.aspect_ratio(imagetk, 350, 200)), Image.ANTIALIAS))
+                small_pic = ImageTk.PhotoImage(image.resize((self.aspect_ratio(imagetk)), Image.ANTIALIAS))
             except:
-                pic = PhotoImage(file=PATH+'imgs/placeholder.png')
+                image = (Image.open(PATH+'imgs/placeholder.png'))
+                imagetk = ImageTk.PhotoImage(image)
+                pic = ImageTk.PhotoImage(image.resize((self.aspect_ratio(imagetk, 350, 200)), Image.ANTIALIAS))
+                small_pic = ImageTk.PhotoImage(image.resize((self.aspect_ratio(imagetk)), Image.ANTIALIAS))
+                
             self.image_data.append({'img_name': entry['img'],'img_file': pic})
+            self.small_image_data.append({'img_name': entry['img'],'img_file': small_pic})
+    
+    def aspect_ratio(self, image, desired_width=120, desired_height=100):   # keep images at their original aspect ratio
+        try:
+            x = image.width()
+            y = image.height()
+        except:
+            print('ERROR: could not determine aspect ratio - invalid image')    # most likely inputted non tkimage
+            return(desired_width, desired_height)
+        
+        x_percent = desired_width / x   # finds how much % the desired width/height is relative to actual image width/height
+        y_percent = desired_height / y
+        
+        if x_percent < y_percent:   # image is wide
+            width = round(x_percent*x)
+            height = round(x_percent*y)
+            return(int(width), int(height))
+        elif y_percent < x_percent: # image is tall
+            width = round(y_percent*x)
+            height = round(y_percent*y)
+            return(int(width), int(height))
+        else:   # image is a square
+            width = round(x_percent*x)
+            height = round(y_percent*y)
+            return(int(width), int(height))
 
 if __name__ == '__main__':
     root = Tk()
