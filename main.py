@@ -221,6 +221,21 @@ if __name__ == '__main__':
     root.title('Cafe Interferance')
     root.maxsize(700, 1000)
     root.minsize(700, 1000)
-    root.configure(background=BROWN)
+    root.configure(background=CREAM)
     App(root, External_data_manager())
     root.mainloop()
+
+'''
+TO DO:
+
+- Remove all data handling from frontend, move it to backend
+- Have clear frontend and backend classes
+    - Front end will only request specific data and backend will return data
+    - Front end will need a way to know what data to request
+    - In each state have a request to the backend for some data that will be used, and send data back to the backend to be stored
+    - Ideally, if time allows it, each front end state should be seperated into different classes (looks clean, relevant information where it needs to be, no communication between states its all handled by backend)
+- Start and finish view order state
+- Add popups (popup on confirm order event and maybe a popup on adding/removing items specififing the amount to be added/removed)(if i have xtra time)
+- Styling for loops?????? (i.e. for each child in frame... configure(background=color))
+- Clean up code
+'''
