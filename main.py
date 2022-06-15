@@ -12,9 +12,9 @@ CREAM = '#FFFFF0'
 BROWN = '#A79280'
 
 class App:
-    def __init__(self, parent):
+    def __init__(self, parent, data):
         self.parent = parent
-        external_data = External_data_manager()
+        external_data = data
         
         self.menu = external_data.json_data
         self.image_data = external_data.image_data
@@ -37,7 +37,7 @@ class App:
     
     def widgets(self):
         master_frame = Frame(self.parent, background=CREAM)
-        master_frame.pack(fill='both', expand=True)
+        master_frame.pack(fill='both', expand=1)
         
         self.nav_frame = customtkinter.CTkFrame(master_frame, fg_color=DARK_CREAM, corner_radius=0)
         
@@ -65,59 +65,69 @@ class App:
         
         button1.pack(ipady=50, pady=30, padx=50)
         button2.pack(ipady=50, pady=30, padx=50)
-        root.place(anchor='n', relx=.5, rely=.128, relheight=0.872, relwidth=1)
+        root.pack(anchor='n')
     
     def menu_state(self):
         root = self.state_frame
         
-        categories_frame = Frame(root, background=CREAM, highlightbackground=BROWN, highlightthickness=2)
+        categories_frame = Frame(root, background=BROWN, highlightbackground=BROWN, highlightthickness=2)
         for category in self.categories:
             catergory_name = category['category'].capitalize()
-            border = Frame(categories_frame, background=CREAM, highlightbackground=BROWN, highlightthickness=1)
-            frame = Frame(border, background=CREAM)
             for data in self.small_image_data:
                 if data['img_name'] == category['img']:
                     image_data = data['img_file']
-            button = Button(frame, image=image_data, width=120, height=100, borderwidth=0, background=CREAM, activebackground=CREAM, command=lambda i=category['category']:self.set_category(i))
-            button.pack()
-            Button(frame, text=catergory_name, fg=ORANGE_COLOUR, borderwidth=0, background=CREAM, activebackground=CREAM, activeforeground=ORANGE_COLOUR, command=lambda i=category['category']:self.set_category(i)).pack()
-            border.pack(pady=10, padx=10)
+            customtkinter.CTkButton(categories_frame, text=catergory_name, fg_color=CREAM, text_color=BROWN, text_font=('Arial', 20), hover=False, corner_radius=27, border_width=5, border_color=BROWN, height=50, width=(self.parent.winfo_width()/len(self.categories)), command=lambda i=category['category']:self.set_category(i)).pack(side='left')
         
-        categories_frame.pack(side='left', fill='y')
+        categories_frame.pack(side='top', fill='x')
         
-        options_frame = Frame(root, background=CREAM, highlightbackground=BROWN, highlightthickness=2)
+        options_frame = Frame(root, background=CREAM)
+
+        scrollable_frame = Frame(options_frame, background=CREAM)
+        scrollable_frame.pack(fill='both', expand=1)
+
+        scrollable_canvas = Canvas(scrollable_frame, background=CREAM, borderwidth=0, highlightbackground=CREAM)
+        scrollable_canvas.pack(side='left', fill='both', expand=1)
+
+        scrollbar = Scrollbar(scrollable_frame, orient=VERTICAL, command=scrollable_canvas.yview)
+        scrollbar.pack(side='right', fill='y')
+
+        scrollable_canvas.configure(yscrollcommand=scrollbar.set)
+        scrollable_canvas.bind('<Configure>', lambda e: scrollable_canvas.configure(scrollregion = scrollable_canvas.bbox('all')))
+
+        second_frame = Frame(scrollable_canvas, background=CREAM)
+
+        scrollable_canvas.create_window(((self.parent.winfo_width()/2),0), window=second_frame, anchor='n', width=self.parent.winfo_width())
         
-        x = y = 1
         for entry in self.menu:
             if entry['category'] == self.category:
-                x += 1
                 name, price = entry['name'], entry['price']
-                frame = Frame(options_frame, background=CREAM, highlightbackground=BROWN, highlightthickness=1)
-                frame.grid(column = x, row = y, pady=10, padx=10)
+                frame = customtkinter.CTkFrame(second_frame, fg_color=DARK_CREAM, corner_radius=27, border_width=3, border_color=BROWN)
+                frame.pack(padx=(self.parent.winfo_width()*0.1), pady=20, ipady=20, fill='x', expand='true')    # width option is broken above
+                frame.rowconfigure(0, weight=1) # vertically center contents of frame
+                frame.rowconfigure(4, weight=1)
+                frame.columnconfigure(2, weight=1)  # push contents to left
                 for data in self.image_data:
                     if data['img_name'] == entry['img']:
                         image_data = data['img_file']
-                image = Label(frame, image=image_data, width=350, height=200, background=CREAM)
-                image.pack()
+                image = Label(frame, image=image_data, width=200, height=200, background=DARK_CREAM)
+                image.grid(row=1, column=1, rowspan=3, padx=5)
                 try:
                     size = entry['size']
-                    Label(frame, text=f'{name.capitalize()}({size}) for ${price}', fg=ORANGE_COLOUR, background=CREAM).pack()
+                    Label(frame, text=f'{name.capitalize()}({size})', fg=BROWN, background=DARK_CREAM, font=('Arial', 40)).grid(column=2, row=1)
                 except KeyError:
-                    Label(frame, text=f'{name.capitalize()} for ${price}', fg=ORANGE_COLOUR, background=CREAM).pack()
-                if x == 3:
-                    x = 1
-                    y += 1
-        options_frame.grid_columnconfigure(0, weight=1) # centering the grid within 'options_frame' horizontally
-        options_frame.grid_columnconfigure(4, weight=1)
+                    Label(frame, text=f'{name.capitalize()}', fg=BROWN, background=DARK_CREAM, font=('Arial', 40)).grid(column=2, row=1)
+                buttons_frame = Frame(frame, background=DARK_CREAM)
+                buttons_frame.grid(column=2, columnspan=2, row=3)
+                customtkinter.CTkButton(buttons_frame, text='Add', fg_color=CREAM, text_color=BROWN, text_font=('Arial', 20), hover=False, corner_radius=27, height=50, width=(self.parent.winfo_width()/len(self.categories)), command=lambda i=name:self.update_order(i, True)).pack(side='left', padx=10)
+                customtkinter.CTkButton(buttons_frame, text='Remove', fg_color=CREAM, text_color=BROWN, text_font=('Arial', 20), hover=False, corner_radius=27, height=50, width=(self.parent.winfo_width()/len(self.categories)), command=lambda i=name:self.update_order(i, False)).pack(side='left', padx=10)
+        options_frame.pack(fill='both', expand=1)
         
-        options_frame.pack(fill='both', expand=True)
-        
-        root.place(anchor='n', relx=.5, rely=.128, relheight=0.872, relwidth=1)
+        root.pack(anchor='n', fill='both', expand='true')
     
     def final_state(self):
         root = self.state_frame
         
-        root.place(anchor='n', relx=.5, rely=.128, relheight=0.872, relwidth=1)
+        root.pack(anchor='n', fill='both', expand='true')
 
     def state_picker(self, target_state = 0):
         if self.state_frame.winfo_children():
@@ -140,6 +150,21 @@ class App:
     def clear_order(self):
         self.order = []
         print('order cleared')
+    
+    def update_order(self, item_name, being_added):
+        if being_added:
+            for entry in self.menu:
+                if item_name == entry['name']:
+                    self.order.append(entry)
+        else:
+            if len(self.order) == 0:
+                pass
+            else:
+                for index, entry in enumerate(self.order):
+                    if item_name == entry['name']:
+                        self.order.pop(index)
+                        break   # we don't wanna remove everything with the same name
+        print(self.order)
     
     def set_category(self, category):
         self.category = category
@@ -197,5 +222,5 @@ if __name__ == '__main__':
     root.maxsize(700, 1000)
     root.minsize(700, 1000)
     root.configure(background=BROWN)
-    App(root)
+    App(root, External_data_manager())
     root.mainloop()
