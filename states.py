@@ -1,5 +1,6 @@
-from cgitb import small
+from random import randint
 from tkinter import *
+from turtle import back, color
 import customtkinter    # pip install customtkinter
 
 DARK_CREAM = '#F2DDC3'
@@ -58,12 +59,13 @@ class Start_State:
 
 
 class Menu_State:
-    def __init__(self, root, categories, menu, images, small_images, functions):
+    def __init__(self, root, categories, menu, images, small_images, order, functions):
         self.root = root
         self.categories = categories
         self.menu = menu
         self.images = images
         self.small_images = small_images
+        self.order = order
         self.change_state = functions[0]
         self.update_order = functions[1]
         self.category = categories[0]
@@ -90,32 +92,54 @@ class Menu_State:
         scrollable_canvas.configure(yscrollcommand=scrollbar.set)
         scrollable_canvas.bind('<Configure>', lambda e: scrollable_canvas.configure(scrollregion = scrollable_canvas.bbox('all')))
 
-        second_frame = Frame(scrollable_canvas, background=CREAM)
+        internal_frame = Frame(scrollable_canvas, background=CREAM)
 
-        scrollable_canvas.create_window(((self.root.winfo_width()/2),0), window=second_frame, anchor='n', width=self.root.winfo_width())
+        scrollable_canvas.create_window(((self.root.winfo_width()/2),0), window=internal_frame, anchor='n', width=self.root.winfo_width())
         
         for entry in self.menu:
             if entry['category'] == self.category:
+                count = 0
                 name, price = entry['name'], entry['price']
-                frame = customtkinter.CTkFrame(second_frame, fg_color=DARK_CREAM, corner_radius=27, border_width=3, border_color=BROWN)
+                
+                frame = customtkinter.CTkFrame(internal_frame, fg_color=DARK_CREAM, corner_radius=27, border_width=3, border_color=BROWN)
                 frame.pack(padx=(self.root.winfo_width()*0.1), pady=20, ipady=20, fill='x', expand='true')    # width option is broken above
+
                 for data in self.images:
                     if data['img_name'] == entry['img']:
                         image_data = data['img_file']
+
                 image = Label(frame, image=image_data, width=200, height=200, background=DARK_CREAM)
                 image.pack(padx=5, pady=5, side='left')
+
+                if entry in self.order:
+                    for item in self.order:
+                        if item['name'] == entry['name']:
+                            count += 1
+                
+                label_frame = Frame(frame, background=DARK_CREAM)
+
                 try:
                     size = entry['size']
-                    Label(frame, text=f'{name.capitalize()}', fg=BROWN, background=DARK_CREAM, font=('Arial', 40), anchor='w').pack(fill='x', padx=10, pady=10)
-                    Label(frame, text=f'{size}', fg=BROWN, background=DARK_CREAM, font=('Arial', 15), anchor='w').pack(fill='x', padx=10)
-                    Label(frame, text=f'${price}', fg=BROWN, background=DARK_CREAM, font=('Arial', 20), anchor='w').pack(fill='x', padx=10)
+                    Label(label_frame, text=f'{name.capitalize()}', fg=BROWN, background=DARK_CREAM, font=('Arial', 40), anchor='w').pack(fill='x')
+                    Label(label_frame, text=f'({size})', fg=BROWN, background=DARK_CREAM, font=('Arial', 15), anchor='w').pack(fill='x')
+                    Label(label_frame, text=f'${price}', fg=BROWN, background=DARK_CREAM, font=('Arial', 15), anchor='w').pack(fill='x')
                 except KeyError:
-                    Label(frame, text=f'{name.capitalize()}', fg=BROWN, background=DARK_CREAM, font=('Arial', 40), anchor='w').pack(fill='x', padx=10, pady=10)
-                    Label(frame, text=f'${price}', fg=BROWN, background=DARK_CREAM, font=('Arial', 20), anchor='w').pack(fill='x', padx=10)
-                buttons_frame = Frame(frame, background=DARK_CREAM)
-                buttons_frame.pack(side='bottom', pady=7)
-                customtkinter.CTkButton(buttons_frame, text='Add', fg_color=CREAM, text_color=BROWN, text_font=('Arial', 20), hover=False, corner_radius=27, height=50, width=(self.root.winfo_width()/len(self.categories)), command=lambda i=name:self.update_order(i, True)).pack(side='left', padx=10)
-                customtkinter.CTkButton(buttons_frame, text='Remove', fg_color=CREAM, text_color=BROWN, text_font=('Arial', 20), hover=False, corner_radius=27, height=50, width=(self.root.winfo_width()/len(self.categories)), command=lambda i=name:self.update_order(i, False)).pack(side='left', padx=10)
+                    Label(label_frame, text=f'{name.capitalize()}', fg=BROWN, background=DARK_CREAM, font=('Arial', 40), anchor='w').pack(fill='x')
+                    Label(label_frame, text=f'${price}', fg=BROWN, background=DARK_CREAM, font=('Arial', 15), anchor='w').pack(fill='x')
+                
+                buttons_frame = Frame(label_frame, background=DARK_CREAM)
+
+                if count != 0:
+                    Label(label_frame, text=f'({count} added)', fg=BROWN, background=DARK_CREAM, font=('Arial', 15), anchor='e').pack(fill='x')
+                    customtkinter.CTkButton(buttons_frame, text='Remove', fg_color=CREAM, text_color=BROWN, text_font=('Arial', 20), hover=False, corner_radius=27, height=50, width=(self.root.winfo_width()/len(self.categories)), command=lambda i=name:self.update_order(i, False, 1)).pack(side='right', padx=10)
+                    customtkinter.CTkButton(buttons_frame, text='Add', fg_color=CREAM, text_color=BROWN, text_font=('Arial', 20), hover=False, corner_radius=27, height=50, width=(self.root.winfo_width()/len(self.categories)), command=lambda i=name:self.update_order(i, True, 1)).pack(side='right', padx=10)
+                else:
+                    customtkinter.CTkButton(buttons_frame, text='Add', fg_color=CREAM, text_color=BROWN, text_font=('Arial', 20), hover=False, corner_radius=27, height=50, width=(self.root.winfo_width()/len(self.categories)), command=lambda i=name:self.update_order(i, True, 1)).pack(side='right', padx=10)
+                
+                label_frame.pack(pady=10, padx=10, fill='both', expand=1)
+
+                buttons_frame.pack(side='bottom', fill='x', padx=10, pady=10)
+                
         options_frame.pack(fill='both', expand=1)
         
         self.root.pack(anchor='n', fill='both', expand='true')
@@ -128,5 +152,62 @@ class Menu_State:
 
 
 class Checkout_State:
-    def __init__(self, root, order):
-        pass
+    def __init__(self, root, order, images, functions):
+        self.root = root
+        self.order = order
+        self.images = images
+        self.checkout = functions[0]
+        self.update_order = functions[1]
+    
+    def widgets(self):  # so many magic numbers :(
+        checkout_frame = customtkinter.CTkFrame(self.root, fg_color=DARK_CREAM, border_color=BROWN, border_width=5, corner_radius=100, width=self.root.winfo_width()*.8, height=self.root.winfo_height()*.8)
+
+        customtkinter.CTkFrame(checkout_frame, fg_color=BROWN, height=6, corner_radius=0).place(relx=.5, rely=.17, anchor=CENTER, relwidth=1)
+        Label(checkout_frame, text='Selected Items', font=('Arial', 62), background=DARK_CREAM, foreground=BROWN).place(relx=.5, rely=.085, anchor=CENTER)
+
+        checkout_canvas = Canvas(checkout_frame, background=DARK_CREAM, highlightthickness=0)
+        checkout_canvas.place(anchor='n', rely=.175, relx=.493, relheight=(1-(.17*2)), relwidth=.97)
+
+        checkout_scroll = Scrollbar(checkout_frame, orient=VERTICAL, command=checkout_canvas.yview)
+        checkout_scroll.place(anchor='n', rely=.175, relx=.977, relheight=(1-(.17*2)))
+
+        checkout_canvas.configure(yscrollcommand=checkout_scroll.set)
+        checkout_canvas.bind('<Configure>', lambda e: checkout_canvas.configure(scrollregion = checkout_canvas.bbox('all')))
+
+        internal_frame = Frame(checkout_canvas, background=DARK_CREAM)
+
+        checkout_canvas.create_window(((self.root.winfo_width()/2),0), window=internal_frame, anchor='n', width=self.root.winfo_width()*.8)
+
+        for entry in self.order:
+                name, price = entry['name'], entry['price']
+                
+                frame = customtkinter.CTkFrame(internal_frame, fg_color=CREAM, corner_radius=27, border_width=3, border_color=BROWN)
+                frame.pack(padx=(self.root.winfo_width()*0.05), pady=20, ipady=20, fill='x', expand='true')    # width option is broken above'
+
+                label_frame = Frame(frame, background=CREAM)
+
+                for data in self.images:
+                    if data['img_name'] == entry['img']:
+                        image_data = data['img_file']
+
+                image = Label(frame, image=image_data, width=150, height=150, background=CREAM)
+                image.pack(padx=5, pady=5, side='left')
+
+                try:
+                    size = entry['size']
+                    Label(label_frame, text=f'{name.capitalize()}', fg=BROWN, background=CREAM, font=('Arial', 30), anchor='w').pack(fill='x')
+                    Label(label_frame, text=f'({size})', fg=BROWN, background=CREAM, font=('Arial', 15), anchor='w').pack(fill='x')
+                    Label(label_frame, text=f'${price}', fg=BROWN, background=CREAM, font=('Arial', 15), anchor='w').pack(fill='x')
+                except KeyError:
+                    Label(label_frame, text=f'{name.capitalize()}', fg=BROWN, background=CREAM, font=('Arial', 30), anchor='w').pack(fill='x')
+                    Label(label_frame, text=f'${price}', fg=BROWN, background=CREAM, font=('Arial', 15), anchor='w').pack(fill='x')
+                
+                buttons_frame = Frame(label_frame, background=CREAM)
+
+                customtkinter.CTkButton(buttons_frame, text='Remove', fg_color=DARK_CREAM, text_color=BROWN, text_font=('Arial', 20), hover=False, corner_radius=27, height=50, width=50, command=lambda i=name:self.update_order(i, False, 2)).pack(side='right', padx=10)
+
+                label_frame.pack(pady=10, padx=10, fill='both', expand=1)
+
+                buttons_frame.pack(side='bottom', fill='x', padx=10, pady=10)
+
+        checkout_frame.place(relx=.5, rely=.5, anchor=CENTER)
