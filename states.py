@@ -1,7 +1,8 @@
+from multiprocessing.sharedctypes import Value
 from random import randint
 from tkinter import *
-from turtle import back, color
-import customtkinter    # pip install customtkinter
+import customtkinter
+from numpy import diff    # pip install customtkinter
 
 DARK_CREAM = '#F2DDC3'
 CREAM = '#FFFFF0'
@@ -158,18 +159,20 @@ class Checkout_State:
         self.images = images
         self.checkout = functions[0]
         self.update_order = functions[1]
+        self.round = functions[2]
     
-    def widgets(self):  # so many magic numbers :(
+    def widgets(self, total_price):  # so many magic numbers :(
         checkout_frame = customtkinter.CTkFrame(self.root, fg_color=DARK_CREAM, border_color=BROWN, border_width=5, corner_radius=100, width=self.root.winfo_width()*.8, height=self.root.winfo_height()*.8)
 
         customtkinter.CTkFrame(checkout_frame, fg_color=BROWN, height=6, corner_radius=0).place(relx=.5, rely=.17, anchor=CENTER, relwidth=1)
+        customtkinter.CTkFrame(checkout_frame, fg_color=BROWN, height=6, corner_radius=0).place(relx=.5, rely=.83, anchor=CENTER, relwidth=1)
         Label(checkout_frame, text='Selected Items', font=('Arial', 62), background=DARK_CREAM, foreground=BROWN).place(relx=.5, rely=.085, anchor=CENTER)
 
         checkout_canvas = Canvas(checkout_frame, background=DARK_CREAM, highlightthickness=0)
-        checkout_canvas.place(anchor='n', rely=.175, relx=.493, relheight=(1-(.17*2)), relwidth=.97)
+        checkout_canvas.place(anchor='n', rely=.175, relx=.493, relheight=(1-(.175*2)), relwidth=.97)
 
         checkout_scroll = Scrollbar(checkout_frame, orient=VERTICAL, command=checkout_canvas.yview)
-        checkout_scroll.place(anchor='n', rely=.175, relx=.977, relheight=(1-(.17*2)))
+        checkout_scroll.place(anchor='n', rely=.175, relx=.977, relheight=(1-(.175*2)))
 
         checkout_canvas.configure(yscrollcommand=checkout_scroll.set)
         checkout_canvas.bind('<Configure>', lambda e: checkout_canvas.configure(scrollregion = checkout_canvas.bbox('all')))
@@ -203,11 +206,105 @@ class Checkout_State:
                     Label(label_frame, text=f'${price}', fg=BROWN, background=CREAM, font=('Arial', 15), anchor='w').pack(fill='x')
                 
                 buttons_frame = Frame(label_frame, background=CREAM)
-
                 customtkinter.CTkButton(buttons_frame, text='Remove', fg_color=DARK_CREAM, text_color=BROWN, text_font=('Arial', 20), hover=False, corner_radius=27, height=50, width=50, command=lambda i=name:self.update_order(i, False, 2)).pack(side='right', padx=10)
-
+                
                 label_frame.pack(pady=10, padx=10, fill='both', expand=1)
-
                 buttons_frame.pack(side='bottom', fill='x', padx=10, pady=10)
+        
+        customtkinter.CTkLabel(checkout_frame, text=f'Total price:\n${self.round(total_price)}', fg_color=CREAM, text_color=BROWN, text_font=('Arial', 20), corner_radius=20).place(relheight=.12, relx=.22, rely=.9, anchor=CENTER)
+        if self.order:
+            customtkinter.CTkButton(checkout_frame, text=f'Confirm\norder', fg_color=CREAM, text_color=BROWN, text_font=('Arial', 20), corner_radius=20, hover=False, command=lambda:self.checkout(randint(000,999))).place(relheight=.12, relx=.78, rely=.9, anchor=CENTER)
 
         checkout_frame.place(relx=.5, rely=.5, anchor=CENTER)
+
+class PopUp:
+    def __init__(self, restart_function, reliable_round):
+        self.restart_function = restart_function
+        self.cash = StringVar()
+        self.card_num = StringVar()
+        self.card_csv = IntVar()
+        self.paddings = {'padx': 5, 'pady': 5}
+        self.round = reliable_round
+
+    def popup(self, order, order_num, order_price, root):
+        self.popup_root = Toplevel(root)
+        self.order = order
+        self.order_num = order_num
+        self.order_price = order_price
+
+        self.cancel_button = customtkinter.CTkButton(self.popup_root, fg_color=DARK_CREAM, text_color=BROWN, text_font=('Arial', 20), hover=False)
+        self.cancel_button.pack(side='bottom', pady=20)
+
+        self.popup_root.title('Confirm order')
+        self.popup_root.geometry("350x350")
+        self.popup_root.config(background=CREAM)
+
+        self.master_frame = Frame(self.popup_root, background=CREAM)
+
+        self.pay_with()
+    
+    def pay_with(self):
+        if self.master_frame.winfo_children():
+            for child in self.master_frame.winfo_children():
+                child.destroy()
+
+        self.cancel_button.config(text='Cancel', command=lambda:self.popup_root.destroy())
+        
+        customtkinter.CTkButton(self.master_frame, text='Pay with\ncash', fg_color=DARK_CREAM, text_color=BROWN, text_font=('Arial', 25), hover=False, command=lambda:self.pay_with_cash()).pack(side='left', fill='y', expand=1, padx=20)
+        customtkinter.CTkButton(self.master_frame, text='Pay with\ncard', fg_color=DARK_CREAM, text_color=BROWN, text_font=('Arial', 25), hover=False, command=lambda:self.pay_with_card()).pack(side='right', fill='y', expand=1, padx=20)
+
+        self.master_frame.pack(side='top', pady=20, fill='both', expand=1)
+    
+    def pay_with_cash(self):
+        for child in self.master_frame.winfo_children():
+            child.destroy()
+        self.confirm_button = customtkinter.CTkButton(self.master_frame, text=f'Place order\n#{self.order_num}', fg_color=DARK_CREAM, text_color=BROWN, text_font=('Arial', 20), hover=False, command=lambda:self.display_success())
+        self.cancel_button.config(text='Go back', command=lambda:self.pay_with())
+        root = self.master_frame
+
+        Label(root, text='Enter total value of cash:', background=CREAM, foreground=BROWN, font=('Arial', 20), anchor='w').pack(fill='x', **self.paddings)
+        cash_entry = customtkinter.CTkEntry(root, textvariable=self.cash, fg_color=DARK_CREAM, border_color=BROWN, text_color=BROWN, text_font=('Arial', 20), placeholder_text='e.g.: 20', placeholder_text_color='#C6B9AD')
+        cash_entry.pack(fill='x', **self.paddings)
+
+        Label(root, text='Change:', background=CREAM, foreground=BROWN, font=('Arial', 20), anchor='w').pack(fill='x', **self.paddings)
+        change_label = Label(root, text='Enter cash value...', background=CREAM, foreground=BROWN, font=('Arial', 20), anchor='w')
+        change_label.pack(fill='x', **self.paddings)
+
+        self.cash.trace('w', lambda x, y, z, label=change_label:self.change_output(label))
+
+    def pay_with_card(self):
+        for child in self.master_frame.winfo_children():
+            child.destroy()
+        self.confirm_button = customtkinter.CTkButton(self.master_frame, text=f'Place order\n#{self.order_num}', fg_color=DARK_CREAM, text_color=BROWN, text_font=('Arial', 20), hover=False, command=lambda:self.display_success())
+        self.cancel_button.config(text='Go back', command=lambda:self.pay_with())
+        root = self.master_frame
+
+        Label(root, text='Card number:', background=CREAM, foreground=BROWN, font=('Arial', 20), anchor='w').pack(fill='x', **self.paddings)
+        card_number_entry = customtkinter.CTkEntry(root, textvariable=self.card_num, fg_color=DARK_CREAM, border_color=BROWN, text_color=BROWN, text_font=('Arial', 20), placeholder_text='card number', placeholder_text_color='#C6B9AD')
+        card_number_entry.pack(fill='x', **self.paddings)
+
+        Label(root, text='Three digits on the back:', background=CREAM, foreground=BROWN, font=('Arial', 20), anchor='w').pack(fill='x', **self.paddings)
+        card_csv_entry = customtkinter.CTkEntry(root, textvariable=self.card_csv, fg_color=DARK_CREAM, border_color=BROWN, text_color=BROWN, text_font=('Arial', 20), placeholder_text='csv', placeholder_text_color='#C6B9AD')
+        card_csv_entry.pack(fill='x', **self.paddings)
+    
+    def change_output(self, label):
+        if self.round(self.cash.get()) == self.round(self.order_price):
+            label.config(text='Exact change')
+            self.confirm_button.pack()
+            return
+        if self.cash.get() != '':
+            difference = self.round(float(self.cash.get()))-self.order_price
+            rounded = self.round(difference)    # round() function is unreliable with float
+        try:
+            if float(self.cash.get()) >= self.order_price:
+                label.config(text=f'${abs(rounded)} change')
+                self.confirm_button.pack()
+            else:
+                label.config(text=f'${abs(rounded)} more')
+                self.confirm_button.forget()
+        except ValueError:
+            label.config(text='Enter cash value...')
+    
+    def display_success(self):
+        self.restart_function()
+        self.popup_root.destroy()
