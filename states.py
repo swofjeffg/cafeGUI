@@ -1,8 +1,10 @@
 from multiprocessing.sharedctypes import Value
+from posixpath import split
 from random import randint
 from tkinter import *
+from unicodedata import decimal
 import customtkinter
-from numpy import diff    # pip install customtkinter
+from numpy import diff, var    # pip install customtkinter
 
 DARK_CREAM = '#F2DDC3'
 CREAM = '#FFFFF0'
@@ -217,14 +219,19 @@ class Checkout_State:
 
         checkout_frame.place(relx=.5, rely=.5, anchor=CENTER)
 
+
+
+
 class PopUp:
     def __init__(self, restart_function, reliable_round):
         self.restart_function = restart_function
         self.cash = StringVar()
         self.card_num = StringVar()
-        self.card_csv = IntVar()
+        self.card_csv = StringVar()
         self.paddings = {'padx': 5, 'pady': 5}
         self.round = reliable_round
+
+        self.old = []
 
     def popup(self, order, order_num, order_price, root):
         self.popup_root = Toplevel(root)
@@ -263,8 +270,8 @@ class PopUp:
         root = self.master_frame
 
         Label(root, text='Enter total value of cash:', background=CREAM, foreground=BROWN, font=('Arial', 20), anchor='w').pack(fill='x', **self.paddings)
-        cash_entry = customtkinter.CTkEntry(root, textvariable=self.cash, fg_color=DARK_CREAM, border_color=BROWN, text_color=BROWN, text_font=('Arial', 20), placeholder_text='e.g.: 20', placeholder_text_color='#C6B9AD')
-        cash_entry.pack(fill='x', **self.paddings)
+        self.cash_entry = customtkinter.CTkEntry(root, textvariable=self.cash, fg_color=DARK_CREAM, border_color=BROWN, text_color=BROWN, text_font=('Arial', 20))
+        self.cash_entry.pack(fill='x', **self.paddings)
 
         Label(root, text='Change:', background=CREAM, foreground=BROWN, font=('Arial', 20), anchor='w').pack(fill='x', **self.paddings)
         change_label = Label(root, text='Enter cash value...', background=CREAM, foreground=BROWN, font=('Arial', 20), anchor='w')
@@ -280,14 +287,18 @@ class PopUp:
         root = self.master_frame
 
         Label(root, text='Card number:', background=CREAM, foreground=BROWN, font=('Arial', 20), anchor='w').pack(fill='x', **self.paddings)
-        card_number_entry = customtkinter.CTkEntry(root, textvariable=self.card_num, fg_color=DARK_CREAM, border_color=BROWN, text_color=BROWN, text_font=('Arial', 20), placeholder_text='card number', placeholder_text_color='#C6B9AD')
-        card_number_entry.pack(fill='x', **self.paddings)
+        self.card_number_entry = customtkinter.CTkEntry(root, textvariable=self.card_num, fg_color=DARK_CREAM, border_color=BROWN, text_color=BROWN, text_font=('Arial', 20))
+        self.card_number_entry.pack(fill='x', **self.paddings)
 
         Label(root, text='Three digits on the back:', background=CREAM, foreground=BROWN, font=('Arial', 20), anchor='w').pack(fill='x', **self.paddings)
-        card_csv_entry = customtkinter.CTkEntry(root, textvariable=self.card_csv, fg_color=DARK_CREAM, border_color=BROWN, text_color=BROWN, text_font=('Arial', 20), placeholder_text='csv', placeholder_text_color='#C6B9AD')
-        card_csv_entry.pack(fill='x', **self.paddings)
+        self.card_csv_entry = customtkinter.CTkEntry(root, textvariable=self.card_csv, fg_color=DARK_CREAM, border_color=BROWN, text_color=BROWN, text_font=('Arial', 20))
+        self.card_csv_entry.pack(fill='x', **self.paddings)
+
+        self.card_num.trace('w', lambda x, y, z, type='card':self.is_allowed(type))
+        self.card_csv.trace('w', lambda x, y, z, type='card':self.is_allowed(type))
     
     def change_output(self, label):
+        self.is_allowed('cash')
         if self.round(self.cash.get()) == self.round(self.order_price):
             label.config(text='Exact change')
             self.confirm_button.pack()
@@ -304,6 +315,66 @@ class PopUp:
                 self.confirm_button.forget()
         except ValueError:
             label.config(text='Enter cash value...')
+    
+    def is_allowed(self, type):
+        if type == 'cash':
+            cash_input = self.cash.get()
+
+            if cash_input == '.':
+                self.cash_entry.delete((len(self.cash.get())-1), END)
+
+            if cash_input != '':
+                decimal = False
+                for c in cash_input:
+
+                    if decimal == True:
+                        if c == '.':
+                            self.cash_entry.delete((len(cash_input)-1), END)
+                        if len(split_string[1]) >= 3:
+                            self.cash_entry.delete((len(cash_input)-1), END)
+                            break
+                    
+                    if decimal == False and c == '.':
+                        decimal = True
+                        split_string = self.cash.get().split('.')
+                    elif c.isdigit() == False and c != '.':
+                        self.cash_entry.delete((len(cash_input)-1), END)
+                    
+        elif type == 'card':
+            card_num_input = self.card_num.get()
+            raw_card_num_input = []
+
+            for c in card_num_input:
+                if c != ' ':
+                    raw_card_num_input.append(c)
+            
+            if card_num_input != '':
+                if card_num_input[len(card_num_input)-1].isdigit() == False:
+                    self.card_number_entry.delete((len(card_num_input)-1), END)
+                    return
+                
+                if (len(raw_card_num_input) % 4) == 0 and len(self.old) == 0:
+                    if len(raw_card_num_input) != 16:
+                        self.card_number_entry.insert(END, ' ')
+                
+                if (len(self.card_num.get()) % 5) == 0:   # if a space has been inserted
+                    if self.card_num.get()[len(self.card_num.get())-1] == ' ':
+                        self.old.append(self.card_num.get())
+                    else:
+                        self.card_number_entry.insert([len(self.card_num.get())-1], ' ')
+                else:
+                    for child in self.old:
+                        self.old.remove(child)
+                
+                if len(raw_card_num_input) >= 17:
+                    self.card_number_entry.delete((len(card_num_input)-1), END)
+                    return
+
+            if len(self.card_csv.get()) >= 4:
+                self.card_csv_entry.delete(3, END)
+            
+            if self.card_csv.get().isdigit() == False:
+                self.card_csv_entry.delete(len(self.card_csv.get())-1, END)
     
     def display_success(self):
         self.restart_function()
