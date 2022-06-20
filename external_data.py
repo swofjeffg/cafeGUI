@@ -98,4 +98,5 @@ class Data:
                             order_file.write(
                                 f'{item.capitalize()}: '+str(dict[item]))
                             order_file.write('\n')
+                order_file.write('\n')
             order_file.write('---\n\n\n')
